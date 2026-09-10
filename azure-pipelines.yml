@@ -1,39 +1,24 @@
-# ============================================================
-# Node.js + Express -> Azure App Service Linux
-# CI/CD Pipeline
-# ============================================================
-
 trigger:
   branches:
     include:
       - dev-branch
 
 variables:
-
-  # Azure DevOps Service Connection NAME
   azureSubscription: '2857750b-d8ce-453a-a08b-bffce94dcf3c'
-
-  # Azure App Service NAME
   webAppName: 'employee-notification-system'
-
-  # Node.js version
   nodeVersion: '20.x'
-
-  # Build agent
   vmImageName: 'ubuntu-latest'
 
-
-# ============================================================
-# BUILD
-# ============================================================
-
 stages:
+
+# =========================
+# BUILD
+# =========================
 
 - stage: Build
   displayName: 'Build and Test'
 
   jobs:
-
   - job: Build
     displayName: 'Build Node.js Application'
 
@@ -42,33 +27,27 @@ stages:
 
     steps:
 
-    # Install Node.js
     - task: NodeTool@0
       displayName: 'Install Node.js'
       inputs:
         versionSpec: '$(nodeVersion)'
 
-    # Install dependencies
     - script: |
         npm ci
       displayName: 'Install dependencies'
 
-    # Build
     - script: |
         npm run build --if-present
       displayName: 'Build application'
 
-    # Test
     - script: |
         npm test --if-present
       displayName: 'Run tests'
 
-    # Remove development dependencies
     - script: |
         npm prune --omit=dev
       displayName: 'Prepare production dependencies'
 
-    # Create ZIP
     - task: ArchiveFiles@2
       displayName: 'Create deployment package'
       inputs:
@@ -78,7 +57,6 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
         replaceExistingArchive: true
 
-    # Publish artifact
     - task: PublishPipelineArtifact@1
       displayName: 'Publish artifact'
       inputs:
@@ -86,9 +64,9 @@ stages:
         artifact: 'drop'
 
 
-# ============================================================
+# =========================
 # DEPLOY
-# ============================================================
+# =========================
 
 - stage: Deploy
   displayName: 'Deploy to Azure'
@@ -96,7 +74,6 @@ stages:
   condition: succeeded()
 
   jobs:
-
   - deployment: Deploy
     displayName: 'Deploy to Azure App Service'
 
@@ -106,15 +83,13 @@ stages:
       vmImage: $(vmImageName)
 
     strategy:
-
       runOnce:
-
         deploy:
 
           steps:
 
           - task: AzureWebApp@1
-            displayName: 'Deploy Node.js application'
+            displayName: 'Deploy Node.js Application'
             inputs:
               azureSubscription: '$(azureSubscription)'
               appType: 'webAppLinux'
