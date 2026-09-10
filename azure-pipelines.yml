@@ -1,24 +1,35 @@
 trigger:
-  branches:
-    include:
-      - dev-branch
+- dev-branch
 
 variables:
+
+  # Azure Resource Manager service connection
   azureSubscription: '2857750b-d8ce-453a-a08b-bffce94dcf3c'
+
+  # Azure App Service name
   webAppName: 'employee-notification-system'
+
+  # Environment name
+  environmentName: 'employee-notification'
+
+  # Node.js version
   nodeVersion: '20.x'
+
+  # Azure DevOps agent
   vmImageName: 'ubuntu-latest'
 
-stages:
 
-# =========================
+# =========================================================
 # BUILD
-# =========================
+# =========================================================
+
+stages:
 
 - stage: Build
   displayName: 'Build and Test'
 
   jobs:
+
   - job: Build
     displayName: 'Build Node.js Application'
 
@@ -27,27 +38,28 @@ stages:
 
     steps:
 
-    - task: NodeTool@0
+    # Install Node.js
+    - task: UseNode@1
       displayName: 'Install Node.js'
       inputs:
-        versionSpec: '$(nodeVersion)'
+        version: $(nodeVersion)
 
+    # Install dependencies
     - script: |
         npm ci
       displayName: 'Install dependencies'
 
+    # Build application
     - script: |
         npm run build --if-present
       displayName: 'Build application'
 
+    # Run tests
     - script: |
         npm test --if-present
       displayName: 'Run tests'
 
-    - script: |
-        npm prune --omit=dev
-      displayName: 'Prepare production dependencies'
-
+    # Create ZIP
     - task: ArchiveFiles@2
       displayName: 'Create deployment package'
       inputs:
@@ -57,16 +69,15 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
         replaceExistingArchive: true
 
-    - task: PublishPipelineArtifact@1
-      displayName: 'Publish artifact'
-      inputs:
-        targetPath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-        artifact: 'drop'
+    # Publish artifact
+    - upload: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+      artifact: drop
+      displayName: 'Publish deployment artifact'
 
 
-# =========================
+# =========================================================
 # DEPLOY
-# =========================
+# =========================================================
 
 - stage: Deploy
   displayName: 'Deploy to Azure'
@@ -74,20 +85,35 @@ stages:
   condition: succeeded()
 
   jobs:
-  - job: Deploy
+
+  - deployment: Deploy
     displayName: 'Deploy to Azure App Service'
+
+    environment: $(environmentName)
 
     pool:
       vmImage: $(vmImageName)
 
-    steps:
+    strategy:
 
-    - task: AzureWebApp@1
-      displayName: 'Deploy Node.js Application'
-      inputs:
-        azureSubscription: '$(azureSubscription)'
-        appType: 'webAppLinux'
-        appName: '$(webAppName)'
-        package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
-        runtimeStack: 'NODE|20LTS'
-        startUpCommand: 'npm start'
+      runOnce:
+
+        deploy:
+
+          steps:
+
+          # Download artifact from Build stage
+          - download: current
+            artifact: drop
+            displayName: 'Download build artifact'
+
+          # Deploy to Azure App Service
+          - task: AzureWebApp@1
+            displayName: 'Deploy Node.js Application'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              appType: 'webAppLinux'
+              appName: $(webAppName)
+              runtimeStack: 'NODE|20LTS'
+              package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
+              startUpCommand: 'npm start'
