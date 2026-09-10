@@ -6,15 +6,15 @@
 trigger:
   branches:
     include:
-      - main
+      - dev-branch
 
 variables:
 
   # Azure DevOps Service Connection NAME
-  azureSubscription: 'YOUR-SERVICE-CONNECTION-NAME'
+  azureSubscription: '2857750b-d8ce-453a-a08b-bffce94dcf3c'
 
   # Azure App Service NAME
-  webAppName: 'YOUR-AZURE-WEBAPP-NAME'
+  webAppName: 'employee-notification-system'
 
   # Node.js version
   nodeVersion: '20.x'
