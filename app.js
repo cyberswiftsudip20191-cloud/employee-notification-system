@@ -1,8 +1,8 @@
 const express = require("express");
 
 //require("./listeners/notificationListener");
-require("./listeners/pushNotificationListener");
-require("./listeners/emailListener");
+//require("./listeners/pushNotificationListener");
+//require("./listeners/emailListener");
 
 const app = express();
 

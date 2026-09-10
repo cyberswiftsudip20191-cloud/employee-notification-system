@@ -63,7 +63,7 @@ exports.registerUser = async (req, res) => {
 
             success: true,
 
-            message: "User Registered Successfully",
+            message: "User Registered Successfully showed",
 
             data: {
 

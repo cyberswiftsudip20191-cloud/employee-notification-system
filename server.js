@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const app = require("./app");
-require("./workers/emailWorker");
+//require("./workers/emailWorker");
 
 const { sequelize } = require("./models");
 
