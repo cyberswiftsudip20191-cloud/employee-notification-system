@@ -74,26 +74,20 @@ stages:
   condition: succeeded()
 
   jobs:
-  - deployment: Deploy
+  - job: Deploy
     displayName: 'Deploy to Azure App Service'
-
-    environment: 'production'
 
     pool:
       vmImage: $(vmImageName)
 
-    strategy:
-      runOnce:
-        deploy:
+    steps:
 
-          steps:
-
-          - task: AzureWebApp@1
-            displayName: 'Deploy Node.js Application'
-            inputs:
-              azureSubscription: '$(azureSubscription)'
-              appType: 'webAppLinux'
-              appName: '$(webAppName)'
-              package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
-              runtimeStack: 'NODE|20LTS'
-              startUpCommand: 'npm start'
+    - task: AzureWebApp@1
+      displayName: 'Deploy Node.js Application'
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        appType: 'webAppLinux'
+        appName: '$(webAppName)'
+        package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
+        runtimeStack: 'NODE|20LTS'
+        startUpCommand: 'npm start'
